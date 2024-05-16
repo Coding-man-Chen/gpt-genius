@@ -10,7 +10,7 @@ const links = [
     label: "tours",
   },
   {
-    href: "/new-tour",
+    href: "/tours/new-tour",
     label: "new tour",
   },
   {
