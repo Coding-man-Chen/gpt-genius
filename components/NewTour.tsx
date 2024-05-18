@@ -17,8 +17,20 @@ const NewTour = () => {
     isPending,
   } = useMutation({
     mutationFn: async (destination: TourQueryProps) => {
-      const newTour = await generateTourResponse(destination);
-      return newTour;
+      const capitalizeDestination:TourQueryProps = {
+        city: destination.city.charAt(0).toUpperCase() + destination.city.slice(1),
+        country: destination.country.charAt(0).toUpperCase() + destination.country.slice(1)
+      }
+      const existingTour = await getExistingTour(capitalizeDestination)
+      if(existingTour){
+        return existingTour
+      }
+      const newTour = await generateTourResponse(capitalizeDestination);
+      if(newTour){
+        await createTour(newTour)
+        return newTour
+      }
+      return null;
     },
     onSuccess: (data) => {
       if (data) {

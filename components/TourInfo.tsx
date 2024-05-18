@@ -1,6 +1,6 @@
 import { TourInfoProps } from "@/utils/action";
 
-type TourProps = {
+export type TourProps = {
   tour: TourInfoProps;
 };
 const TourInfo = ({ tour }: TourProps) => {
