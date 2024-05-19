@@ -10,25 +10,31 @@ import {
 import { type TourQueryProps } from "@/utils/action";
 import toast from "react-hot-toast";
 
+
 const NewTour = () => {
+  const queryClient = useQueryClient();
   const {
     mutate,
     data: tour,
     isPending,
   } = useMutation({
     mutationFn: async (destination: TourQueryProps) => {
-      const capitalizeDestination:TourQueryProps = {
-        city: destination.city.charAt(0).toUpperCase() + destination.city.slice(1),
-        country: destination.country.charAt(0).toUpperCase() + destination.country.slice(1)
-      }
-      const existingTour = await getExistingTour(capitalizeDestination)
-      if(existingTour){
-        return existingTour
+      const capitalizeDestination: TourQueryProps = {
+        city:
+          destination.city.charAt(0).toUpperCase() + destination.city.slice(1),
+        country:
+          destination.country.charAt(0).toUpperCase() +
+          destination.country.slice(1),
+      };
+      const existingTour = await getExistingTour(capitalizeDestination);
+      if (existingTour) {
+        return existingTour;
       }
       const newTour = await generateTourResponse(capitalizeDestination);
-      if(newTour){
-        await createTour(newTour)
-        return newTour
+      if (newTour) {
+        await createTour(newTour);
+        queryClient.invalidateQueries({ queryKey: ["tours"] });
+        return newTour;
       }
       return null;
     },
@@ -73,7 +79,7 @@ const NewTour = () => {
           </button>
         </div>
       </form>
-      {tour && <TourInfo tour={tour}/>}
+      {tour && <TourInfo tour={tour} />}
     </div>
   );
 };

@@ -15,12 +15,12 @@ export type TourQueryProps = {
 };
 
 export type TourInfoProps = {
-    city: string;
-    country:string;
-    title:string;
-    description:string;
-    stops:string[]
-} 
+  city: string;
+  country: string;
+  title: string;
+  description: string;
+  stops: string[];
+};
 
 export const generateMessage = async (chatMessages: OpenaiMessageType[]) => {
   try {
@@ -43,12 +43,13 @@ export const generateMessage = async (chatMessages: OpenaiMessageType[]) => {
 
 export const getExistingTour = async ({ city, country }: TourQueryProps) => {
   return prisma.tour.findUnique({
-    where:{
-      city_country:{
-        city,country
-      }
-    }
-  })
+    where: {
+      city_country: {
+        city,
+        country,
+      },
+    },
+  });
 };
 
 export const generateTourResponse = async ({
@@ -83,45 +84,70 @@ export const generateTourResponse = async ({
       model: "gpt-3.5-turbo-0125",
       temperature: 0,
     });
-    const tourData = JSON.parse(response.choices[0].message.content!)
-    if(!tourData.tour){
-        return null
-    } 
-    return tourData.tour as TourInfoProps
+    const tourData = JSON.parse(response.choices[0].message.content!);
+    if (!tourData.tour) {
+      return null;
+    }
+    return tourData.tour as TourInfoProps;
   } catch (error) {
     console.log(error);
     return null;
   }
 };
 
-export const createTour = async (tour:TourInfoProps) => {
+export const createTour = async (tour: TourInfoProps) => {
   return prisma.tour.create({
-    data:tour
-  })
+    data: tour,
+  });
 };
 
-export const getAllTours = async (searchTerm?:string) => {
-  if(!searchTerm){
+export const getAllTours = async (searchTerm?: string) => {
+  if (!searchTerm) {
     const tours = await prisma.tour.findMany({
       orderBy: {
-        city: "asc"
-      }
-    })
-    return tours
+        city: "asc",
+      },
+    });
+    return tours;
   }
   const tours = await prisma.tour.findMany({
-    where:{
-      OR:[
+    where: {
+      OR: [
         {
-          city:{
-            contains: searchTerm
+          city: {
+            contains: searchTerm,
+            mode: "insensitive",
           },
-          country:{
-            contains:searchTerm
-          }
-        }
-      ]
+        },
+        {
+          country: {
+            contains: searchTerm,
+            mode: "insensitive",
+          },
+        },
+      ],
+    },
+  });
+  return tours;
+};
+
+export const getSingleTour = async (id: string) => {
+  return prisma.tour.findUnique({
+    where:{
+      id
     }
   })
-  return tours
+}
+
+export const getTourImage = async (city:string, country:string) => {
+  try {
+    const response = await openai.images.generate({
+      prompt: `a panoramic view of the ${city} ${country}`,
+      n:1,
+      size:'512x512',
+    })
+    return response.data[0]?.url
+  } catch (error) {
+    return null
+  }
 }
