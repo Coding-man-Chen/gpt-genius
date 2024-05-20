@@ -1,23 +1,33 @@
 "use client";
 import { FormEvent, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { generateMessage } from "@/utils/action";
+import { fetchUserTokensById, generateMessage, substractTokens } from "@/utils/action";
 import { type OpenaiMessageType } from "@/utils/action";
 import toast from "react-hot-toast";
+import { useAuth } from "@clerk/nextjs";
 const Chat = () => {
   const [text, setText] = useState("");
+  const {userId} = useAuth()
   const [messages, setMessages] = useState<OpenaiMessageType[]>([]);
   const { mutate,isPending } = useMutation({
-    mutationFn: (query: OpenaiMessageType) =>
-      generateMessage([...messages, query]),
-    onSuccess: (data) => {
-      if (!data) {
+    mutationFn: async (query: OpenaiMessageType) => {
+      const currentTokens = await fetchUserTokensById(userId!)
+      if( !currentTokens || currentTokens<100){
+        toast.error("Tokens balance too low...");
+        return null
+      }
+      const response = await generateMessage([...messages, query])
+      if(!response){
         toast.error("Something went wrong");
         return;
       }
-      setMessages((prev) => [...prev, data]);
+      setMessages((prev) => [...prev, response.message]);
       setText("");
+      const newTokens = await substractTokens(userId!,response.tokens!)
+      toast.success(`${newTokens} tokens remaining...`)   
     },
+    // mutationFn: (query: OpenaiMessageType) =>
+    //   generateMessage([...messages, query]),
   });
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
